@@ -15,6 +15,7 @@ interface CreateApiSessionInput {
   expires_at: number | null;
   business_id?: string;
   branch_id?: string;
+  terminal_name?: string | null;
 }
 
 export async function createApiSession(input: CreateApiSessionInput) {
@@ -37,7 +38,8 @@ export async function createApiSession(input: CreateApiSessionInput) {
     method: "POST",
     headers,
     body: JSON.stringify({
-      expires_at: input.expires_at
+      expires_at: input.expires_at,
+      terminal_name: input.terminal_name ?? null
     })
   });
 

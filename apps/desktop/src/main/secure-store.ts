@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 
 const sessionFileName = "mst-session.bin";
 const deviceFileName = "mst-device-id.txt";
+const terminalNameFileName = "mst-terminal-name.txt";
 
 function storageDirectory() {
   const directory = path.join(app.getPath("userData"), "secure");
@@ -18,6 +19,10 @@ function sessionFilePath() {
 
 function deviceFilePath() {
   return path.join(storageDirectory(), deviceFileName);
+}
+
+function terminalNameFilePath() {
+  return path.join(storageDirectory(), terminalNameFileName);
 }
 
 function assertEncryptionAvailable() {
@@ -65,9 +70,29 @@ function clearSession() {
   }
 }
 
+function getTerminalName() {
+  const filePath = terminalNameFilePath();
+
+  if (!existsSync(filePath)) {
+    return null;
+  }
+
+  return readFileSync(filePath, "utf8").trim() || null;
+}
+
+function setTerminalName(terminalName: string) {
+  writeFileSync(terminalNameFilePath(), terminalName.trim(), {
+    encoding: "utf8"
+  });
+}
+
 export function registerSecureStorageHandlers() {
   ipcMain.handle("mst:device-id:get", () => getDeviceId());
   ipcMain.handle("mst:session:get", () => getSession());
   ipcMain.handle("mst:session:set", (_event, session) => setSession(session));
   ipcMain.handle("mst:session:clear", () => clearSession());
+  ipcMain.handle("mst:terminal-name:get", () => getTerminalName());
+  ipcMain.handle("mst:terminal-name:set", (_event, terminalName) =>
+    setTerminalName(String(terminalName))
+  );
 }

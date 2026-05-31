@@ -1,5 +1,5 @@
 import type { RequestHandler } from "express";
-import type { Permission } from "@mst/shared";
+import { Role, type Permission } from "@mst/shared";
 
 import { forbidden } from "../errors/http-error";
 
@@ -7,6 +7,16 @@ export function requirePermission(permission: Permission): RequestHandler {
   return (req, _res, next) => {
     if (!req.context.user.permissions.includes(permission)) {
       return next(forbidden(`Missing permission: ${permission}`));
+    }
+
+    return next();
+  };
+}
+
+export function requireRole(role: Role): RequestHandler {
+  return (req, _res, next) => {
+    if (!req.context.user.roles.includes(role)) {
+      return next(forbidden(`Missing role: ${role}`));
     }
 
     return next();

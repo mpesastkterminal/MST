@@ -10,6 +10,7 @@ export interface BranchMpesaCredentials {
   branch_id: string;
   environment: "sandbox" | "production";
   shortcode: string;
+  transaction_type: "CustomerPayBillOnline" | "CustomerBuyGoodsOnline";
   passkey: string;
   consumer_key: string;
   consumer_secret: string;
@@ -27,7 +28,7 @@ export async function resolveBranchMpesaCredentials(
   const { data, error } = await db
     .from("mpesa_credentials")
     .select(
-      "id,business_id,branch_id,environment,shortcode,encrypted_passkey,encrypted_consumer_key,encrypted_consumer_secret"
+      "id,business_id,branch_id,environment,shortcode,transaction_type,encrypted_passkey,encrypted_consumer_key,encrypted_consumer_secret"
     )
     .eq("business_id", context.business_id)
     .eq("branch_id", branchId)
@@ -48,6 +49,7 @@ export async function resolveBranchMpesaCredentials(
     branch_id: data.branch_id,
     environment: data.environment,
     shortcode: data.shortcode,
+    transaction_type: data.transaction_type,
     passkey: decryptSecret(data.encrypted_passkey),
     consumer_key: decryptSecret(data.encrypted_consumer_key),
     consumer_secret: decryptSecret(data.encrypted_consumer_secret)

@@ -2,17 +2,18 @@
 
 MST (M-Pesa STK Terminal) is a multi-tenant SaaS foundation for managing M-Pesa STK operations across businesses and branches.
 
-This repository is currently in Phase 2: security, authentication, and tenant isolation foundation.
+The repository is currently scaffolded through Phase 5: secure tenant core, M-Pesa STK engine foundation, business operations, admin lifecycle workflows, terminal tracking, session/device management, operations health, reporting, audit logging, and deployment preparation.
 
 ## Workspaces
 
-- `apps/api` - Express API server
+- `apps/api` - Express API server deployed to Railway
 - `apps/web` - Next.js renderer UI
 - `apps/desktop` - Electron shell
 - `packages/shared` - shared TypeScript types
 - `infra/supabase` - Supabase migrations
+- `docs` - setup and deployment notes
 
-## Phase 1 Commands
+## Local Commands
 
 ```bash
 npm install
@@ -21,21 +22,28 @@ npm run dev:web
 npm run dev:desktop
 ```
 
-## Required Environment
+## Verification
 
-Copy `.env.example` into the environment used by each app. The API requires:
+```bash
+npm run typecheck
+npm run build
+npm run build:api
+```
 
-- `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `MST_CREDENTIAL_ENCRYPTION_KEY`
+`npm run build:api` is the Railway deployment build path for the API-only service.
 
-The web app requires:
+## Environment Setup
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `NEXT_PUBLIC_API_URL`
+Use the app-specific examples:
 
-## Current Security Boundary
+- `apps/api/.env.example`
+- `apps/web/.env.example`
+- `apps/desktop/.env.example`
 
-The backend validates Supabase bearer tokens, resolves the active business from `business_memberships`, requires `x-mst-device-id` and `x-mst-session-id` for protected API calls, and enforces permissions server-side.
+See `docs/ENVIRONMENT_SETUP.md` for the full Railway, Supabase, Daraja, and local development checklists.
+
+## Security Boundary
+
+The backend validates Supabase bearer tokens, resolves tenant membership server-side, requires MST session and device headers for protected calls, and enforces permissions and transaction visibility in API routes. `business_id` is derived from authenticated membership and remains the root tenant boundary.
+
+There is no public registration flow. Users are provisioned by authorized administrators with temporary passwords and a `must_change_password` profile flag.

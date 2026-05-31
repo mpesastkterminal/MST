@@ -6,11 +6,29 @@ import { errorHandler } from "./core/middleware/error-handler";
 import { authenticationMiddleware } from "./core/middleware/authentication";
 import { requestLogger } from "./core/middleware/request-logger";
 import { tenantContextMiddleware } from "./core/middleware/tenant-context";
+import { auditRouter, platformAuditRouter } from "./modules/audit/audit.routes";
 import { authRouter } from "./modules/auth/auth.routes";
 import { branchesRouter } from "./modules/branches/branches.routes";
+import { businessesRouter } from "./modules/businesses/businesses.routes";
+import {
+  dashboardRouter,
+  platformDashboardRouter
+} from "./modules/dashboard/dashboard.routes";
 import { healthRouter } from "./modules/health/health.routes";
 import { mpesaCallbackRouter } from "./modules/mpesa/mpesa-callback.routes";
+import { mpesaCredentialsRouter } from "./modules/mpesa/mpesa-credentials.routes";
+import {
+  operationsRouter,
+  platformOperationsRouter
+} from "./modules/operations/operations.routes";
+import {
+  platformReportsRouter,
+  reportsRouter
+} from "./modules/reports/reports.routes";
+import { sessionsRouter } from "./modules/sessions/sessions.routes";
+import { terminalsRouter } from "./modules/terminals/terminals.routes";
 import { transactionsRouter } from "./modules/transactions/transactions.routes";
+import { usersRouter } from "./modules/users/users.routes";
 
 export function createApp() {
   const app = express();
@@ -27,8 +45,21 @@ export function createApp() {
   app.use(tenantContextMiddleware);
 
   app.use("/auth", authRouter);
+  app.use("/platform", platformDashboardRouter);
+  app.use("/platform", platformAuditRouter);
+  app.use("/platform", platformOperationsRouter);
+  app.use("/platform", platformReportsRouter);
+  app.use("/businesses", businessesRouter);
+  app.use("/businesses", auditRouter);
   app.use("/businesses", branchesRouter);
+  app.use("/businesses", dashboardRouter);
+  app.use("/businesses", mpesaCredentialsRouter);
+  app.use("/businesses", operationsRouter);
+  app.use("/businesses", reportsRouter);
+  app.use("/businesses", sessionsRouter);
+  app.use("/businesses", terminalsRouter);
   app.use("/businesses", transactionsRouter);
+  app.use("/businesses", usersRouter);
 
   app.use(errorHandler);
 

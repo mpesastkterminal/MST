@@ -9,7 +9,10 @@ import {
   type UserContext
 } from "@mst/shared";
 
-import { createUserSupabaseClient } from "../db/supabase";
+import {
+  createUserSupabaseClient,
+  getSupabaseServiceClient
+} from "../db/supabase";
 import {
   badRequest,
   conflict,
@@ -34,7 +37,9 @@ type SessionRow = {
   business_id: string;
   branch_id: string | null;
   device_id: string;
+  terminal_id: string | null;
   status: string;
+  terminals?: { status?: string } | { status?: string }[] | null;
 };
 
 const branchScopedRoles = new Set<Role>([Role.BranchManager, Role.Cashier]);
@@ -65,6 +70,14 @@ function permissionsForRoles(roles: Role[]) {
 
 function isSessionBootstrapRoute(reqPath: string, method: string) {
   return method === "POST" && reqPath === "/auth/sessions";
+}
+
+function terminalStatus(row: SessionRow) {
+  const terminal = Array.isArray(row.terminals)
+    ? row.terminals[0]
+    : row.terminals;
+
+  return terminal?.status ?? "active";
 }
 
 export const tenantContextMiddleware: RequestHandler = async (req, res, next) => {
@@ -197,7 +210,7 @@ export const tenantContextMiddleware: RequestHandler = async (req, res, next) =>
 
       const { data: session, error: sessionError } = await db
         .from("app_sessions")
-        .select("id,user_id,business_id,branch_id,device_id,status")
+        .select("id,user_id,business_id,branch_id,device_id,terminal_id,status,terminals(status)")
         .eq("id", sessionId)
         .eq("user_id", req.auth.user_id)
         .eq("business_id", selectedMembership.business_id)
@@ -219,10 +232,37 @@ export const tenantContextMiddleware: RequestHandler = async (req, res, next) =>
         return next(unauthorized("Session branch does not match request context."));
       }
 
+      if (activeSession.terminal_id && terminalStatus(activeSession) !== "active") {
+        return next(unauthorized("Terminal access has been revoked."));
+      }
+
       contextUser.session = {
         session_id: activeSession.id,
-        device_id: activeSession.device_id
+        device_id: activeSession.device_id,
+        terminal_id: activeSession.terminal_id
       };
+
+      const serviceDb = getSupabaseServiceClient();
+      const now = new Date().toISOString();
+
+      await serviceDb
+        .from("app_sessions")
+        .update({ last_activity_at: now, updated_at: now })
+        .eq("id", activeSession.id)
+        .eq("business_id", selectedMembership.business_id);
+
+      await serviceDb
+        .from("app_users")
+        .update({ last_activity_at: now })
+        .eq("id", req.auth.user_id);
+
+      if (activeSession.terminal_id) {
+        await serviceDb
+          .from("terminals")
+          .update({ last_seen_at: now, updated_at: now })
+          .eq("id", activeSession.terminal_id)
+          .eq("business_id", selectedMembership.business_id);
+      }
     }
 
     req.context = {

@@ -10,6 +10,8 @@
     "dev:api": "npm run dev -w @mst/api",
     "dev:web": "npm run dev -w @mst/web",
     "dev:desktop": "concurrently -k -n web,electron -c cyan,magenta \"npm run dev:web\" \"wait-on http://localhost:3000 && npm run dev -w @mst/desktop\"",
+    "build:api": "npm run build -w @mst/shared && npm run build -w @mst/api",
+    "start:api": "npm run start -w @mst/api",
     "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },

@@ -1,19 +1,32 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { createApiSession } from "@/lib/api/client";
-import { saveApiSession } from "@/lib/auth/session-storage";
+import {
+  getTerminalName,
+  saveApiSession,
+  saveTerminalName
+} from "@/lib/auth/session-storage";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [terminalName, setTerminalName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    void getTerminalName().then((storedName) => {
+      if (storedName) {
+        setTerminalName(storedName);
+      }
+    });
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -34,8 +47,13 @@ export default function LoginPage() {
       const { session } = await createApiSession({
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
-        expires_at: data.session.expires_at ?? null
+        expires_at: data.session.expires_at ?? null,
+        terminal_name: terminalName.trim() || null
       });
+
+      if (terminalName.trim()) {
+        await saveTerminalName(terminalName.trim());
+      }
 
       await saveApiSession(session);
       router.replace("/dashboard");
@@ -85,6 +103,19 @@ export default function LoginPage() {
               required
               type="password"
               value={password}
+            />
+          </label>
+
+          <label className="block">
+            <span className="text-sm font-medium text-slate-700">
+              Terminal Name
+            </span>
+            <input
+              className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+              onChange={(event) => setTerminalName(event.target.value)}
+              placeholder="Counter 1"
+              type="text"
+              value={terminalName}
             />
           </label>
 

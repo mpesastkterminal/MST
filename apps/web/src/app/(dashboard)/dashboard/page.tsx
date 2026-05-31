@@ -1,7 +1,7 @@
 import { Role } from "@mst/shared";
 
+import { BusinessDashboardClient } from "@/features/dashboard/components/business-dashboard-client";
 import { HealthStatus } from "@/features/health/components/health-status";
-import { KpiGrid } from "@/features/dashboard/components/kpi-grid";
 
 export default function DashboardPage() {
   return (
@@ -17,7 +17,7 @@ export default function DashboardPage() {
         <HealthStatus />
       </header>
 
-      <KpiGrid />
+      <BusinessDashboardClient />
     </div>
   );
 }

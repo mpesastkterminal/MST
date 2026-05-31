@@ -2,6 +2,7 @@ import type { ApiSession } from "@mst/shared";
 
 const browserSessionKey = "mst.apiSession";
 const browserDeviceKey = "mst.deviceId";
+const browserTerminalNameKey = "mst.terminalName";
 
 function browserAvailable() {
   return typeof window !== "undefined";
@@ -43,6 +44,33 @@ export async function saveApiSession(session: ApiSession) {
 
   if (browserAvailable()) {
     window.localStorage.setItem(browserSessionKey, JSON.stringify(session));
+  }
+}
+
+export async function getTerminalName() {
+  const bridge = desktopBridge();
+
+  if (bridge?.getTerminalName) {
+    return bridge.getTerminalName();
+  }
+
+  if (!browserAvailable()) {
+    return null;
+  }
+
+  return window.localStorage.getItem(browserTerminalNameKey);
+}
+
+export async function saveTerminalName(terminalName: string) {
+  const bridge = desktopBridge();
+
+  if (bridge?.setTerminalName) {
+    await bridge.setTerminalName(terminalName);
+    return;
+  }
+
+  if (browserAvailable()) {
+    window.localStorage.setItem(browserTerminalNameKey, terminalName);
   }
 }
 

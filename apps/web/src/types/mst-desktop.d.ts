@@ -7,6 +7,8 @@ declare global {
       getSession: () => Promise<ApiSession | null>;
       setSession: (session: ApiSession) => Promise<void>;
       clearSession: () => Promise<void>;
+      getTerminalName: () => Promise<string | null>;
+      setTerminalName: (terminalName: string) => Promise<void>;
     };
   }
 }
