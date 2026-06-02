@@ -60,7 +60,7 @@ function transactionDescription(value: string | null | undefined) {
 }
 
 function callbackBaseUrl() {
-  return getEnv("MST_PUBLIC_API_URL").replace(/\/$/, "");
+  return getEnv("MST_API_PUBLIC_URL").replace(/\/$/, "");
 }
 
 function redactedCallbackUrl(transactionId: string) {

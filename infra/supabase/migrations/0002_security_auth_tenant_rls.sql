@@ -322,3 +322,9 @@ create policy mpesa_credentials_service_only_select on mpesa_credentials
 create policy mpesa_credentials_service_only_write on mpesa_credentials
   for all using (mst.is_service_context() or mst.is_super_admin())
   with check (mst.is_service_context() or mst.is_super_admin());
+
+grant usage on schema mst to anon, authenticated, service_role;
+grant execute on all functions in schema mst to anon, authenticated, service_role;
+
+alter default privileges in schema mst
+  grant execute on functions to anon, authenticated, service_role;

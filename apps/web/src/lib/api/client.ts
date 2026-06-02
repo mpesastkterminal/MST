@@ -18,6 +18,17 @@ interface CreateApiSessionInput {
   terminal_name?: string | null;
 }
 
+export class ApiSessionError extends Error {
+  constructor(
+    message: string,
+    public readonly code: string,
+    public readonly status: number,
+    public readonly context?: unknown
+  ) {
+    super(message);
+  }
+}
+
 export async function createApiSession(input: CreateApiSessionInput) {
   const deviceId = await getDeviceId();
   const headers = new Headers({
@@ -46,7 +57,12 @@ export async function createApiSession(input: CreateApiSessionInput) {
   const payload = await response.json();
 
   if (!response.ok) {
-    throw new Error(payload?.error?.message ?? "Failed to create API session.");
+    throw new ApiSessionError(
+      payload?.error?.message ?? "Failed to create API session.",
+      payload?.error?.code ?? "api_session_error",
+      response.status,
+      payload?.context
+    );
   }
 
   const session: ApiSession = {

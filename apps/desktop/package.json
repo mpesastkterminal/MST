@@ -4,7 +4,7 @@
   "private": true,
   "main": "dist/main/main.js",
   "scripts": {
-    "dev": "npm run build && electron .",
+    "dev": "npm run build && node scripts/start-electron.cjs",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

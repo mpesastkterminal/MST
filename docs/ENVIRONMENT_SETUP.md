@@ -22,9 +22,9 @@ Phase 5 does not introduce additional environment variables. It does add admin-p
 
 `WEB_ORIGIN`
 
-- Purpose: CORS origin allowed to call the API.
-- Example: `http://localhost:3000`
-- Local: required when running `apps/web`.
+- Purpose: comma-separated browser origins allowed to call the API.
+- Example: `http://localhost:3000,https://mst.up.railway.app`
+- Local: required when running `apps/web`; `http://localhost:3000` is always allowed by the API.
 - Production: set to the deployed renderer origin if hosted.
 
 `SUPABASE_URL`
@@ -61,10 +61,10 @@ Generate it with:
 node -e "console.log('base64:' + require('crypto').randomBytes(32).toString('base64'))"
 ```
 
-`MST_PUBLIC_API_URL`
+`MST_API_PUBLIC_URL`
 
 - Purpose: public HTTPS API URL used in Daraja STK callback URLs.
-- Example: `https://mst-api-production.up.railway.app`
+- Example: `https://mst-api.up.railway.app`
 - Local: required for real Daraja callback testing; use an HTTPS tunnel.
 - Production: required and must be reachable by Safaricom.
 
@@ -73,8 +73,8 @@ node -e "console.log('base64:' + require('crypto').randomBytes(32).toString('bas
 `NEXT_PUBLIC_API_URL`
 
 - Purpose: API base URL used by the Next.js renderer.
-- Example: `http://localhost:4000`
-- Local: required.
+- Example: `https://mst-api.up.railway.app`
+- Local: required. Use `http://localhost:4000` for a local API, or your Railway API URL when the API is deployed but the renderer is running locally.
 - Production: set to the Railway API public URL.
 
 `NEXT_PUBLIC_SUPABASE_URL`
@@ -99,6 +99,7 @@ node -e "console.log('base64:' + require('crypto').randomBytes(32).toString('bas
 - Example: `http://localhost:3000`
 - Local: required when running the desktop shell against the web dev server.
 - Production: set to the packaged or hosted renderer URL for the release channel.
+- Important: this is not the Railway API URL. Railway deploys `apps/api`; Electron still needs a Next.js renderer from local `npm run dev` or a separately hosted web renderer.
 
 ## Railway Deployment Checklist
 
@@ -123,7 +124,7 @@ npm run start:api
 ```
 
 6. Add API variables from `apps/api/.env.example`.
-7. Set `MST_PUBLIC_API_URL` to the Railway public HTTPS domain.
+7. Set `MST_API_PUBLIC_URL` to the Railway public HTTPS domain.
 8. Do not install or run Electron on Railway.
 
 Railway's monorepo docs describe root-directory and shared-monorepo deployment options: https://docs.railway.com/deployments/monorepo
@@ -149,7 +150,7 @@ Supabase RLS documentation: https://supabase.com/docs/guides/database/postgres/r
 2. Create or configure a Daraja app.
 3. Obtain shortcode, passkey, consumer key, and consumer secret.
 4. In MST, save credentials per branch and environment.
-5. Ensure `MST_PUBLIC_API_URL` is an HTTPS URL reachable from Safaricom.
+5. Ensure `MST_API_PUBLIC_URL` is an HTTPS URL reachable from Safaricom.
 6. Use sandbox credentials first.
 7. Confirm callbacks arrive at `/mpesa/callback/stk/:requestId/:callbackToken`.
 
@@ -159,6 +160,7 @@ Safaricom developer portal: https://developer.safaricom.co.ke/
 
 1. Run `npm install`.
 2. Copy `.env.example` into app-specific `.env` files or export values in your shell.
+   For Electron local development, create `apps/web/.env.local` with `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SUPABASE_URL`, and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 3. Apply Supabase migrations.
 4. Seed a super admin, then use the API to create businesses and provision users with temporary passwords.
 5. Create at least one active branch and save active M-Pesa credentials for that branch.
@@ -180,3 +182,11 @@ npm run dev:web
 ```bash
 npm run dev:desktop
 ```
+
+For the normal desktop development path, run this single command from the repository root:
+
+```bash
+npm run dev
+```
+
+This starts the local Next.js renderer and then launches Electron. To use a Railway API backend, set `NEXT_PUBLIC_API_URL` in `apps/web/.env.local` to the Railway API URL; do not set `MST_WEB_URL` to the API URL.

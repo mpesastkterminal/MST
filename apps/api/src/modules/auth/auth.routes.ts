@@ -9,6 +9,7 @@ import {
 import { asyncHandler } from "../../core/http/async-handler";
 import { readHeaderValue } from "../../core/http/read-header";
 import { badRequest, serviceUnavailable } from "../../core/errors/http-error";
+import { isCashier } from "../../core/security/roles";
 import { writeAuditLog } from "../audit/audit.service";
 
 export const authRouter = Router();
@@ -29,9 +30,10 @@ async function registerTerminal(
   businessId: string,
   branchId: string | null,
   deviceId: string,
-  terminalName: string | null
+  terminalName: string | null,
+  required: boolean
 ) {
-  if (!branchId) {
+  if (!branchId || !required) {
     return null;
   }
 
@@ -81,11 +83,27 @@ authRouter.post(
     const serviceDb = getSupabaseServiceClient();
     const expiresAt =
       typeof req.body?.expires_at === "number" ? req.body.expires_at : null;
+    const terminalRequired = isCashier(req.context.user);
+    const terminalName = normalizeTerminalName(req.body?.terminal_name);
+
+    if (terminalRequired && !terminalName) {
+      res.status(409).json({
+        error: {
+          code: "terminal_required",
+          message: "Terminal name is required for cashier sessions.",
+          request_id: req.context.request_id
+        },
+        context: req.context.user
+      });
+      return;
+    }
+
     const terminal = await registerTerminal(
       req.context.user.business_id,
       req.context.user.branch_id,
       deviceId,
-      normalizeTerminalName(req.body?.terminal_name)
+      terminalName,
+      terminalRequired
     );
 
     const { data, error } = await db

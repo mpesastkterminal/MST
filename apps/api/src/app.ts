@@ -30,11 +30,49 @@ import { terminalsRouter } from "./modules/terminals/terminals.routes";
 import { transactionsRouter } from "./modules/transactions/transactions.routes";
 import { usersRouter } from "./modules/users/users.routes";
 
+const defaultAllowedOrigins = [
+  "http://localhost:3000",
+  "https://mst.up.railway.app"
+];
+
+const allowedHeaders = [
+  "Authorization",
+  "Content-Type",
+  "x-mst-device-id",
+  "x-mst-session-id",
+  "x-mst-business-id",
+  "x-mst-branch-id",
+  "idempotency-key"
+];
+
+function allowedOrigins() {
+  const configuredOrigins = (process.env.WEB_ORIGIN ?? "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  return [...new Set([...defaultAllowedOrigins, ...configuredOrigins])];
+}
+
 export function createApp() {
   const app = express();
+  const corsAllowedOrigins = allowedOrigins();
 
   app.use(helmet());
-  app.use(cors({ origin: process.env.WEB_ORIGIN ?? true }));
+  app.use(
+    cors({
+      origin(origin, callback) {
+        if (!origin || corsAllowedOrigins.includes(origin)) {
+          callback(null, true);
+          return;
+        }
+
+        callback(new Error(`CORS origin not allowed: ${origin}`));
+      },
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      allowedHeaders
+    })
+  );
   app.use(express.json());
   app.use(requestLogger);
 
